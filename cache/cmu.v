@@ -55,10 +55,10 @@ module cmu (
 
     localparam
         S_IDLE = 0,
-        S_BACK = 1,
-        S_BACK_WAIT = 2,
+        S_PRE_BACK = 1,
+        S_BACK = 2,
         S_FILL = 3,
-        S_FILL_WAIT = 4;
+        S_WAIT = 4;
 
     reg [2:0]state = 0;
     reg [2:0]next_state = 0;
@@ -90,14 +90,14 @@ module cmu (
                         if (cache_hit)
                             next_state = S_IDLE;
                         else if (cache_valid && cache_dirty)
-                            next_state = S_BACK_WAIT;
+                            next_state = S_PRE_BACK;
                         else
                             next_state = S_FILL;
                     end
                     next_word_count = 2'b00;
                 end
 
-                S_BACK_WAIT: begin
+                S_PRE_BACK: begin
                     next_state = S_BACK;
                     next_word_count = 2'b00;
                 end
@@ -116,7 +116,7 @@ module cmu (
 
                 S_FILL: begin
                     if (mem_ack_i && word_count == {LINE_WORDS_WIDTH{1'b1}})
-                        next_state = S_FILL_WAIT;
+                        next_state = S_WAIT;
                     else
                         next_state = S_FILL;
 
@@ -126,7 +126,7 @@ module cmu (
                         next_word_count = word_count;
                 end
 
-                S_FILL_WAIT: begin
+                S_WAIT: begin
                     next_state = S_IDLE;
                     next_word_count = 2'b00;
                 end
@@ -137,7 +137,7 @@ module cmu (
     // cache ctrl
     always @ (*) begin
         case(state)
-            S_IDLE, S_FILL_WAIT: begin
+            S_IDLE, S_WAIT: begin
                 cache_addr = addr_rw;
                 cache_load = en_r;
                 cache_edit = en_w;
@@ -145,7 +145,7 @@ module cmu (
                 cache_u_b_h_w = u_b_h_w;
                 cache_din = data_w;
             end
-            S_BACK, S_BACK_WAIT: begin
+            S_BACK, S_PRE_BACK: begin
                 cache_addr = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], next_word_count, {LINE_WORDS_WIDTH{1'b0}}};
                 cache_load = 1'b0;
                 cache_edit = 1'b0;
@@ -168,7 +168,7 @@ module cmu (
     // mem ctrl
     always @ (*) begin
         case (next_state)
-            S_IDLE, S_BACK_WAIT, S_FILL_WAIT: begin
+            S_IDLE, S_PRE_BACK, S_WAIT: begin
                 mem_cs_o = 1'b0;
                 mem_we_o = 1'b0;
                 mem_addr_o = 32'b0;
