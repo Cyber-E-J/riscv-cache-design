@@ -11,9 +11,9 @@ module cmu (
 		output stall,
 
         // mem side
-		output reg mem_cs_o,
-		output reg mem_we_o,
-		output reg [31:0] mem_addr_o,
+		output reg mem_cs_o = 0,
+		output reg mem_we_o = 0,
+		output reg [31:0] mem_addr_o = 0,
 		input [31:0] mem_data_i,
 		output [31:0] mem_data_o,
 		input mem_ack_i,
@@ -24,12 +24,12 @@ module cmu (
 
     `include "addr_define.vh"
 
-    reg [ADDR_BITS-1:0] cache_addr;
-    reg cache_load;
-    reg cache_store;
-    reg cache_edit;
-    reg [2:0] cache_u_b_h_w;
-    reg [WORD_BITS-1:0] cache_din;
+    reg [ADDR_BITS-1:0] cache_addr = 0;
+    reg cache_load = 0;
+    reg cache_store = 0;
+    reg cache_edit = 0;
+    reg [2:0] cache_u_b_h_w = 0;
+    reg [WORD_BITS-1:0] cache_din = 0;
     wire cache_hit;
     wire [WORD_BITS-1:0] cache_dout;
     wire cache_valid;
@@ -62,8 +62,8 @@ module cmu (
 
     reg [2:0]state = 0;
     reg [2:0]next_state = 0;
-    reg [LINE_WORDS_WIDTH-1:0]word_count = 0;
-    reg [LINE_WORDS_WIDTH-1:0]next_word_count = 0;
+    reg [ELEMENT_WORDS_WIDTH-1:0]word_count = 0;
+    reg [ELEMENT_WORDS_WIDTH-1:0]next_word_count = 0;
     assign cmu_state = state;
 
     always @ (posedge clk) begin
@@ -88,46 +88,46 @@ module cmu (
                 S_IDLE: begin
                     if (en_r || en_w) begin
                         if (cache_hit)
-                            next_state = S_IDLE;
+                            next_state = ??;
                         else if (cache_valid && cache_dirty)
-                            next_state = S_PRE_BACK;
+                            next_state = ??;
                         else
-                            next_state = S_FILL;
+                            next_state = ??;
                     end
                     next_word_count = 2'b00;
                 end
 
                 S_PRE_BACK: begin
-                    next_state = S_BACK;
+                    next_state = ??;
                     next_word_count = 2'b00;
                 end
 
                 S_BACK: begin
-                    if (mem_ack_i && word_count == {LINE_WORDS_WIDTH{1'b1}})    // 2'b11 in default case
-                        next_state = S_FILL;
+                    if (mem_ack_i && word_count == {ELEMENT_WORDS_WIDTH{1'b1}})    // 2'b11 in default case
+                        next_state = ??;
                     else
-                        next_state = S_BACK;
+                        next_state = ??;
 
                     if (mem_ack_i)
-                        next_word_count = word_count + 2'b01;
+                        next_word_count = ??;
                     else
                         next_word_count = word_count;
                 end
 
                 S_FILL: begin
-                    if (mem_ack_i && word_count == {LINE_WORDS_WIDTH{1'b1}})
-                        next_state = S_WAIT;
+                    if (mem_ack_i && word_count == {ELEMENT_WORDS_WIDTH{1'b1}})
+                        next_state = ??;
                     else
-                        next_state = S_FILL;
+                        next_state = ??;
 
                     if (mem_ack_i)
-                        next_word_count = word_count + 2'b01;
+                        next_word_count = ??;
                     else
                         next_word_count = word_count;
                 end
 
                 S_WAIT: begin
-                    next_state = S_IDLE;
+                    next_state = ??;
                     next_word_count = 2'b00;
                 end
             endcase
@@ -146,7 +146,7 @@ module cmu (
                 cache_din = data_w;
             end
             S_BACK, S_PRE_BACK: begin
-                cache_addr = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], next_word_count, {LINE_WORDS_WIDTH{1'b0}}};
+                cache_addr = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], next_word_count, {ELEMENT_WORDS_WIDTH{1'b0}}};
                 cache_load = 1'b0;
                 cache_edit = 1'b0;
                 cache_store = 1'b0;
@@ -154,7 +154,7 @@ module cmu (
                 cache_din = 32'b0;
             end
             S_FILL: begin
-                cache_addr = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], word_count, {LINE_WORDS_WIDTH{1'b0}}};
+                cache_addr = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], word_count, {ELEMENT_WORDS_WIDTH{1'b0}}};
                 cache_load = 1'b0;
                 cache_edit = 1'b0;
                 cache_store = mem_ack_i;
@@ -177,18 +177,18 @@ module cmu (
             S_BACK: begin
                 mem_cs_o = 1'b1;
                 mem_we_o = 1'b1;
-                mem_addr_o = {cache_tag, addr_rw[ADDR_BITS-TAG_BITS-1:BLOCK_WIDTH], next_word_count, {LINE_WORDS_WIDTH{1'b0}}};
+                mem_addr_o = {cache_tag, addr_rw[ADDR_BITS-TAG_BITS-1:BLOCK_WIDTH], next_word_count, {ELEMENT_WORDS_WIDTH{1'b0}}};
             end
 
             S_FILL: begin
                 mem_cs_o = 1'b1;
                 mem_we_o = 1'b0;
-                mem_addr_o = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], next_word_count, {LINE_WORDS_WIDTH{1'b0}}};
+                mem_addr_o = {addr_rw[ADDR_BITS-1:BLOCK_WIDTH], next_word_count, {ELEMENT_WORDS_WIDTH{1'b0}}};
             end
         endcase
     end
     assign mem_data_o = cache_dout;
 
-    assign stall = (next_state != S_IDLE);
+    assign stall = ??;
 
 endmodule

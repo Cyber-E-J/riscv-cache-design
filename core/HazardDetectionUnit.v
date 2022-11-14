@@ -47,11 +47,11 @@ module HazardDetectionUnit(
     assign reg_FD_flush = Branch_ID;
     assign reg_DE_flush = load_stall;
 
-    assign forward_ctrl_A = {2{rs1_forward_1}} & 2'd1 |
+    assign forward_ctrl_A = rs1_forward_1 ? 2'd1 :
                             {2{rs1_forward_2}} & 2'd2 |
                             {2{rs1_forward_3}} & 2'd3 ;
 
-    assign forward_ctrl_B = {2{rs2_forward_1}} & 2'd1 |
+    assign forward_ctrl_B = rs2_forward_1 ? 2'd1 :
                             {2{rs2_forward_2}} & 2'd2 |
                             {2{rs2_forward_3}} & 2'd3 ;
 
